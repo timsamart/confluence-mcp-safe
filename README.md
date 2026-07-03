@@ -1,0 +1,2 @@
+# confluence-mcp-safe
+
