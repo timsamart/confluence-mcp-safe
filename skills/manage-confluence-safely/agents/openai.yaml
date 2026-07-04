@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Confluence Safely"
+  short_description: "Create and update Confluence with safe previews"
+  default_prompt: "Use $manage-confluence-safely to create or update Confluence content with an exact reviewed preview."

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "confluence_safe": {
+      "type": "local",
+      "command": ["node", "H:/repos/jira-conf-mcp/confluence-mcp-safe/dist/src/index.js"],
+      "enabled": true,
+      "environment": {
+        "CONFLUENCE_BASE_URL": "{env:CONFLUENCE_BASE_URL}",
+        "CONFLUENCE_DEPLOYMENT": "{env:CONFLUENCE_DEPLOYMENT}",
+        "CONFLUENCE_TOKEN": "{env:CONFLUENCE_TOKEN}",
+        "CONFLUENCE_EMAIL": "{env:CONFLUENCE_EMAIL}",
+        "CONFLUENCE_CONNECTION_ID": "{env:CONFLUENCE_CONNECTION_ID}",
+        "CONFLUENCE_ALLOWED_SPACES": "{env:CONFLUENCE_ALLOWED_SPACES}"
+      }
+    }
+  },
+  "permission": {
+    "confluence_safe_*": "ask",
+    "confluence_safe_get_context": "allow",
+    "confluence_safe_list_spaces": "allow",
+    "confluence_safe_list_templates": "allow",
+    "confluence_safe_get_template": "allow",
+    "confluence_safe_search_content": "allow",
+    "confluence_safe_get_content": "allow",
+    "confluence_safe_propose_page_create": "allow",
+    "confluence_safe_propose_page_create_from_page": "allow",
+    "confluence_safe_propose_page_create_from_template": "allow",
+    "confluence_safe_propose_page_update": "allow",
+    "confluence_safe_get_changeset": "allow",
+    "confluence_safe_discard_changeset": "allow"
+  }
+}

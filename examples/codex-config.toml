@@ -1,0 +1,33 @@
+[mcp_servers.confluence_safe]
+command = "node"
+args = ["H:/repos/jira-conf-mcp/confluence-mcp-safe/dist/src/index.js"]
+env_vars = ["CONFLUENCE_BASE_URL", "CONFLUENCE_DEPLOYMENT", "CONFLUENCE_TOKEN", "CONFLUENCE_EMAIL", "CONFLUENCE_CONNECTION_ID", "CONFLUENCE_ALLOWED_SPACES", "CONFLUENCE_MAX_RESULTS", "CONFLUENCE_MAX_CONTENT_BYTES", "CONFLUENCE_CHANGESET_TTL_SECONDS"]
+default_tools_approval_mode = "prompt"
+
+[mcp_servers.confluence_safe.tools.get_context]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.list_spaces]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.list_templates]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.get_template]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.search_content]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.get_content]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.propose_page_create]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.propose_page_create_from_page]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.propose_page_create_from_template]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.propose_page_update]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.get_changeset]
+approval_mode = "auto"
+[mcp_servers.confluence_safe.tools.discard_changeset]
+approval_mode = "auto"
+
+# apply_additive_changeset and apply_mutating_changeset inherit "prompt" and
+# cannot reach the MCP server until the user approves them in Codex.
