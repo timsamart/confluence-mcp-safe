@@ -9,18 +9,59 @@ npm install
 npm run build
 CONFLUENCE_BASE_URL=https://example.atlassian.net \
 CONFLUENCE_DEPLOYMENT=cloud CONFLUENCE_EMAIL=you@example.com CONFLUENCE_TOKEN=... \
+CONFLUENCE_ALLOWED_SPACES=DOCS,ENG \
 node dist/src/index.js
 ```
 
 Copy `.env.example` into your secret-injection system; the process intentionally does not load `.env` files. Configure an MCP client to launch `node /absolute/path/to/dist/src/index.js` with those variables.
 
+## Windows PowerShell setup
+
+Persist the runtime variables once per Windows user profile:
+
+```powershell
+$vars = @{
+  CONFLUENCE_BASE_URL = 'https://example.atlassian.net'
+  CONFLUENCE_DEPLOYMENT = 'cloud' # use 'data_center' for Confluence Server/Data Center
+  CONFLUENCE_EMAIL = 'you@example.com' # cloud only
+  CONFLUENCE_TOKEN = 'replace-at-runtime'
+  CONFLUENCE_CONNECTION_ID = 'work'
+  CONFLUENCE_ALLOWED_SPACES = 'DOCS,ENG'
+  CONFLUENCE_MAX_RESULTS = '50'
+  CONFLUENCE_MAX_CONTENT_BYTES = '200000'
+  CONFLUENCE_CHANGESET_TTL_SECONDS = '600'
+}
+
+foreach ($pair in $vars.GetEnumerator()) {
+  [Environment]::SetEnvironmentVariable($pair.Key, $pair.Value, 'User')
+}
+```
+
+Open a new PowerShell session after running that snippet so the new user variables are visible immediately.
+
+## Deployment modes
+
+| Mode | Base URL | Email | Token | Auth shape |
+| --- | --- | --- | --- | --- |
+| Cloud | `https://your-domain.atlassian.net` | required | Confluence API token | Basic auth with email + token |
+| Data Center | `https://wiki.company.tld[/context]` | omit | Confluence PAT | Bearer token |
+
+`CONFLUENCE_DEPLOYMENT` switches the API paths and auth method. `CONFLUENCE_ALLOWED_SPACES` accepts a comma-separated allowlist or `*`, and `CONFLUENCE_MAX_CONTENT_BYTES` bounds preview payloads.
+
 ## Codex and OpenCode
 
-After building, copy the matching file from `examples/` into your client configuration and replace its checked-in absolute server path with this checkout's `dist/src/index.js`. To install the workflow skill for either client, copy `skills/manage-confluence-safely` to the shared user location `$HOME/.agents/skills/manage-confluence-safely` (or to `.agents/skills/manage-confluence-safely` in a target repository). Restart the client if the skill is not discovered immediately.
+Codex users can keep using `examples/codex-config.toml` or copy the same server block into their local config.
 
-The examples allow reads and proposal tools but leave both apply tools behind a one-time UI prompt. The apply tools also advertise `destructiveHint: true`; do not weaken the wildcard/default prompt rule.
+OpenCode users should run the matching installer in each repo they want to expose after the first build:
 
-The MVP exposes connection context, allowed spaces, bounded page search, metadata/outline/full reads, native content-template discovery, page/content-template/direct-source page creation, immutable section updates, idempotent changesets, and verified additive/mutating apply. Native template variables are escaped plain text; exact page versions can also serve as templates. Use the checked-in Codex/OpenCode examples to require a real UI approval before apply; see [client approvals](docs/CLIENT_APPROVALS.md), [architecture](docs/ARCHITECTURE.md), and the [full product concept](CONCEPT.md).
+```powershell
+pwsh -ExecutionPolicy Bypass -File .\scripts\install-opencode.ps1
+```
+
+The script builds `dist/src/index.js` if it is missing, then merges a `confluence_safe` entry into the shared OpenCode config at `~/.config/opencode/opencode.json`. It keeps unrelated settings intact and points OpenCode at this checkout through the env vars you set above.
+Pass `-ConfigPath` if your OpenCode config lives somewhere else.
+
+The checked-in `examples/opencode.jsonc` remains available as a manual fallback, but it no longer needs hand-editing for the local path.
 
 ## Safety boundary
 
