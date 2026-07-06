@@ -23,6 +23,14 @@ export function createServer(config: Config, client: ConfluencePort = new Conflu
     });
   };
 
+  function enforceSpacePolicy(spaceKey: string): string {
+    const key = spaceKey.toUpperCase();
+    if (config.allowedSpaces !== "*" && !config.allowedSpaces.has(key)) {
+      throw new SafeError("POLICY_DENIED", `Space ${key} is outside CONFLUENCE_ALLOWED_SPACES`);
+    }
+    return key;
+  }
+
   async function validateCreateLocation(spaceId: string, spaceKey: string, parentId?: string) {
     const space = await client.space(spaceId, spaceKey);
     if (parentId) {
@@ -36,7 +44,7 @@ export function createServer(config: Config, client: ConfluencePort = new Conflu
     spaceId: string; spaceKey: string; parentId?: string; title: string; bodyStorage: string; idempotencyKey: string;
     source: PageCreateAction["source"];
   }) {
-    const key = input.spaceKey.toUpperCase();
+    const key = enforceSpacePolicy(input.spaceKey);
     validateStorageFragment(input.bodyStorage);
     if (Buffer.byteLength(input.bodyStorage) > config.maxContentBytes) throw new SafeError("CONTENT_TOO_LARGE", "Proposed page exceeds CONFLUENCE_MAX_CONTENT_BYTES");
     await validateCreateLocation(input.spaceId, key, input.parentId);
@@ -114,6 +122,7 @@ export function createServer(config: Config, client: ConfluencePort = new Conflu
     }),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   }, async ({ sourceContentId, sourceExpectedVersion, ...input }) => {
+    enforceSpacePolicy(input.spaceKey);
     const source = await client.page(sourceContentId);
     if (source.id !== sourceContentId || source.version !== sourceExpectedVersion) throw new SafeError("VERSION_CONFLICT", "Template page changed or did not resolve exactly; fetch it again");
     return proposeCreate({ ...input, bodyStorage: source.storage, source: { kind: "page", contentId: source.id, version: source.version, storageHash: digest(source.storage) } });
@@ -127,8 +136,8 @@ export function createServer(config: Config, client: ConfluencePort = new Conflu
     }),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   }, async ({ templateId, variables, ...input }) => {
+    const targetKey = enforceSpacePolicy(input.spaceKey);
     const template = await client.template(templateId);
-    const targetKey = input.spaceKey.toUpperCase();
     if (template.spaceKey && template.spaceKey !== targetKey) throw new SafeError("INVALID_INPUT", "A space template can only be used in its exact owning space");
     const resolved = resolveTemplateStorage(template.bodyStorage, variables);
     return proposeCreate({
