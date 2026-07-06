@@ -52,14 +52,22 @@ Open a new PowerShell session after running that snippet so the new user variabl
 
 Codex users can keep using `examples/codex-config.toml` or copy the same server block into their local config.
 
-OpenCode users should run the matching installer in each repo they want to expose after the first build:
+OpenCode users should run the matching installer in each repo they want to expose:
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File .\scripts\install-opencode.ps1
+powershell.exe -ExecutionPolicy Bypass -File .\scripts\install-opencode.ps1
+# Or, when PowerShell 7 is installed:
+pwsh -File .\scripts\install-opencode.ps1
 ```
 
-The script builds `dist/src/index.js` if it is missing, then merges a `confluence_safe` entry into the shared OpenCode config at `~/.config/opencode/opencode.json`. It keeps unrelated settings intact and points OpenCode at this checkout through the env vars you set above.
-Pass `-ConfigPath` if your OpenCode config lives somewhere else.
+The script installs both parts of the integration:
+
+- `confluence_safe` is merged into the shared OpenCode MCP config.
+- `manage-confluence-safely` is copied to `~/.config/opencode/skills/` for global discovery.
+
+Existing `opencode.json` and `opencode.jsonc` files are supported. The installer validates the update before touching either destination, preserves JSONC comments and unrelated settings, keeps permission rules in their security-sensitive order, writes through a verified temporary file, and creates a timestamped backup whenever it changes an existing config or skill. Re-running it with the same version is idempotent.
+
+Pass `-ConfigPath` or `-SkillsPath` to override either destination. If both `opencode.json` and `opencode.jsonc` exist in the default directory, the installer refuses to guess; pass `-ConfigPath` explicitly.
 
 The checked-in `examples/opencode.jsonc` remains available as a manual fallback, but it no longer needs hand-editing for the local path.
 
