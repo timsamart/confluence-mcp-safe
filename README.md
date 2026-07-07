@@ -67,6 +67,8 @@ The script installs both parts of the integration:
 
 Existing `opencode.json` and `opencode.jsonc` files are supported. The installer validates the update before touching either destination, preserves JSONC comments and unrelated settings, keeps permission rules in their security-sensitive order, writes through a verified temporary file, and creates a timestamped backup whenever it changes an existing config or skill. Re-running it with the same version is idempotent.
 
+The generated MCP environment includes `CONFLUENCE_EMAIL` only for Cloud (or when that variable is explicitly set). Data Center installations do not receive the Cloud-only placeholder.
+
 Pass `-ConfigPath` or `-SkillsPath` to override either destination. If both `opencode.json` and `opencode.jsonc` exist in the default directory, the installer refuses to guess; pass `-ConfigPath` explicitly.
 
 The checked-in `examples/opencode.jsonc` remains available as a manual fallback, but it no longer needs hand-editing for the local path.

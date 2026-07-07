@@ -1,10 +1,16 @@
 import { z } from "zod";
 
+const optionalEmail = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const normalized = value.trim();
+  return normalized === "" || normalized === "{env:CONFLUENCE_EMAIL}" ? undefined : normalized;
+}, z.string().email().optional());
+
 const schema = z.object({
   CONFLUENCE_BASE_URL: z.string().url(),
   CONFLUENCE_DEPLOYMENT: z.enum(["cloud", "data_center"]),
   CONFLUENCE_TOKEN: z.string().min(1),
-  CONFLUENCE_EMAIL: z.string().email().optional(),
+  CONFLUENCE_EMAIL: optionalEmail,
   CONFLUENCE_CONNECTION_ID: z.string().min(1).default("default"),
   CONFLUENCE_ALLOWED_SPACES: z.string().min(1),
   CONFLUENCE_MAX_RESULTS: z.coerce.number().int().min(1).max(100).default(50),

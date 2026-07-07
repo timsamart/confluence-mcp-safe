@@ -42,15 +42,22 @@ function Resolve-OpenCodeConfigPath {
   return $jsonPath
 }
 
+function Get-UserOrProcessEnv {
+  param([Parameter(Mandatory = $true)][string]$Name)
+
+  $value = [Environment]::GetEnvironmentVariable($Name, 'User')
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    $value = [Environment]::GetEnvironmentVariable($Name, 'Process')
+  }
+  return $value
+}
+
 function Get-MissingUserEnv {
   param([string[]]$Names)
 
   $missing = @()
   foreach ($name in $Names) {
-    $value = [Environment]::GetEnvironmentVariable($name, 'User')
-    if ([string]::IsNullOrWhiteSpace($value)) {
-      $value = [Environment]::GetEnvironmentVariable($name, 'Process')
-    }
+    $value = Get-UserOrProcessEnv -Name $name
     if ([string]::IsNullOrWhiteSpace($value)) {
       $missing += $name
     }
@@ -172,18 +179,24 @@ if ([string]::IsNullOrWhiteSpace($SkillsPath)) {
 }
 $resolvedSkillsPath = Resolve-InstallPath -Path $SkillsPath
 
+$deployment = Get-UserOrProcessEnv -Name 'CONFLUENCE_DEPLOYMENT'
+$cloudEmail = Get-UserOrProcessEnv -Name 'CONFLUENCE_EMAIL'
+$serverEnvironment = [ordered]@{
+  CONFLUENCE_BASE_URL = '{env:CONFLUENCE_BASE_URL}'
+  CONFLUENCE_DEPLOYMENT = '{env:CONFLUENCE_DEPLOYMENT}'
+  CONFLUENCE_TOKEN = '{env:CONFLUENCE_TOKEN}'
+  CONFLUENCE_CONNECTION_ID = '{env:CONFLUENCE_CONNECTION_ID}'
+  CONFLUENCE_ALLOWED_SPACES = '{env:CONFLUENCE_ALLOWED_SPACES}'
+}
+if ($deployment -eq 'cloud' -or -not [string]::IsNullOrWhiteSpace($cloudEmail)) {
+  $serverEnvironment['CONFLUENCE_EMAIL'] = '{env:CONFLUENCE_EMAIL}'
+}
+
 $serverConfig = [ordered]@{
   type = 'local'
   command = @('node', $serverPath)
   enabled = $true
-  environment = [ordered]@{
-    CONFLUENCE_BASE_URL = '{env:CONFLUENCE_BASE_URL}'
-    CONFLUENCE_DEPLOYMENT = '{env:CONFLUENCE_DEPLOYMENT}'
-    CONFLUENCE_TOKEN = '{env:CONFLUENCE_TOKEN}'
-    CONFLUENCE_EMAIL = '{env:CONFLUENCE_EMAIL}'
-    CONFLUENCE_CONNECTION_ID = '{env:CONFLUENCE_CONNECTION_ID}'
-    CONFLUENCE_ALLOWED_SPACES = '{env:CONFLUENCE_ALLOWED_SPACES}'
-  }
+  environment = $serverEnvironment
 }
 
 # OpenCode uses the last matching permission rule, so the broad rule must stay first.
@@ -233,15 +246,7 @@ if ($missing.Count -gt 0) {
   Write-Warning "Set them with [Environment]::SetEnvironmentVariable(..., 'User') before launching OpenCode."
 }
 
-$deployment = [Environment]::GetEnvironmentVariable('CONFLUENCE_DEPLOYMENT', 'User')
-if ([string]::IsNullOrWhiteSpace($deployment)) {
-  $deployment = [Environment]::GetEnvironmentVariable('CONFLUENCE_DEPLOYMENT', 'Process')
-}
 if ($deployment -eq 'cloud') {
-  $cloudEmail = [Environment]::GetEnvironmentVariable('CONFLUENCE_EMAIL', 'User')
-  if ([string]::IsNullOrWhiteSpace($cloudEmail)) {
-    $cloudEmail = [Environment]::GetEnvironmentVariable('CONFLUENCE_EMAIL', 'Process')
-  }
   if ([string]::IsNullOrWhiteSpace($cloudEmail)) {
     Write-Warning 'CONFLUENCE_EMAIL is required when CONFLUENCE_DEPLOYMENT=cloud.'
   }
